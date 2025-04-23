@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planificador de Ruta Óptima</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #f2f2f2;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin: 1rem 0 0.5rem;
+    }
+    select, input {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin-top: 2rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: 2rem auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Planificador de Ruta Óptima</h1>
+  <form id="rutaForm">
+    <label for="origen">Ciudad Origen:</label>
+    <select id="origen" required></select>
+
+    <label for="destino">Ciudad Destino:</label>
+    <select id="destino" required></select>
+
+    <label for="max_carga">Peso máximo (paquetes):</label>
+    <input type="number" id="max_carga" required>
+
+    <label for="max_distancia">Distancia máxima (km):</label>
+    <input type="number" id="max_distancia" required>
+
+    <label for="max_gasolina">Gasolina máxima (litros):</label>
+    <input type="number" id="max_gasolina" required>
+
+    <button type="submit">Calcular Ruta</button>
+  </form>
+
+  <div class="result" id="resultado"></div>
+
+  <script>
+    const ciudades = ["EDO.MEX", "QRO", "CDMX", "SLP", "MTY", "PUE", "GDL", "MICH", "SON"];
+
+    const origenSelect = document.getElementById('origen');
+    const destinoSelect = document.getElementById('destino');
+
+    ciudades.forEach(ciudad => {
+      origenSelect.innerHTML += `<option value="${ciudad}">${ciudad}</option>`;
+      destinoSelect.innerHTML += `<option value="${ciudad}">${ciudad}</option>`;
+    });
+
+    document.getElementById('rutaForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const data = {
+        origen: origenSelect.value,
+        destino: destinoSelect.value,
+        max_carga: parseFloat(document.getElementById('max_carga').value),
+        max_distancia: parseFloat(document.getElementById('max_distancia').value),
+        max_gasolina: parseFloat(document.getElementById('max_gasolina').value)
+      };
+
+      const res = await fetch('http://localhost:5000/ruta-optima', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const resultado = await res.json();
+      const contenedor = document.getElementById('resultado');
+      contenedor.innerHTML = "";
+
+      if (resultado.length === 0) {
+        contenedor.innerHTML = '<p>No se encontró ninguna ruta que cumpla las restricciones.</p>';
+      } else {
+        resultado.forEach((ruta, i) => {
+          contenedor.innerHTML += `
+            <h3>Ruta ${i + 1}</h3>
+            <p><strong>Ruta:</strong> ${ruta.ruta.join(" → ")}</p>
+            <p><strong>Peso total:</strong> ${ruta.peso_total}</p>
+            <p><strong>Distancia total:</strong> ${ruta.distancia_total} km</p>
+            <p><strong>Consumo de gasolina:</strong> ${ruta.consumo_gasolina} L</p>
+            <hr>
+          `;
+        });
+      }
+    });
+  </script>
+</body>
+</html>
